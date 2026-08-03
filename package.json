@@ -1,6 +1,6 @@
 {
   "name": "HeroWarsAlliance",
-  "version": "1.0.1",
+  "version": "0.9.9",
   "description": "Hero Wars Alliance beta linux client",
   "author": {
     "name": "sickplanet"
@@ -16,6 +16,10 @@
   },
   "build": {
     "appId": "com.hero-wars-alliance.www",
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    },
     "linux": {
       "target": "AppImage",
       "category": "Games",
