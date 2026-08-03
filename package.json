@@ -1,0 +1,29 @@
+{
+  "name": "HeroWarsAlliance",
+  "version": "1.0.0",
+  "description": "Hero Wars Alliance beta linux client",
+  "author": {
+    "name": "sickplanet"
+},
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^40.8.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.hero-wars-alliance.www",
+    "linux": {
+      "target": "AppImage",
+      "category": "Games",
+      "icon": "icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    }
+  }
+}

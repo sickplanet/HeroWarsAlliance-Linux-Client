@@ -1,0 +1,62 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main # Triggers when you push or merge into main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    # Skip if the commit was already bumped by the bot to prevent infinite loops
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Configure Git and Bump Version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # This increments package.json (e.g. 1.0.0 -> 1.0.1)
+          npm version patch -m "Bump version to %s [skip ci]"
+          
+          # Push the updated package.json and tags back to GitHub
+          git push origin main
+          git push origin --tags
+
+  release:
+    needs: bump-version # Waits for the version bump to finish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main # Pulls the newly bumped version
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # The '-p always' flag tells electron-builder to create a GitHub Release
+        run: npm run dist -- -p always
