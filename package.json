@@ -4,7 +4,7 @@
   "description": "Hero Wars Alliance beta linux client",
   "author": {
     "name": "sickplanet"
-},
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
