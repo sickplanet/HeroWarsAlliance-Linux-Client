@@ -1,4 +1,11 @@
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell } = require('electron');
+// Force disk cache size to ~5GB to hold all Unity WebGL assets
+app.commandLine.appendSwitch('disk-cache-size', '5368709120');
+// Always enable WebGL, even on blacklisted GPUs
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+// Force V8 heap to cap at 512MB, expose GC
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512 --expose-gc');
+
 const path = require('path');
 
 function createWindow () {
@@ -7,15 +14,21 @@ function createWindow () {
     height: 720,
     webPreferences: {
       nodeIntegration: false,
-      preload: path.join(__dirname, 'preload.js'),
-      partition: 'persist:hero-wars-cache'
+      //preload: path.join(__dirname, 'preload.js'),
+      partition: 'persist:hero-wars-cache',
+
+      // NEW: Prevents Unity WebGL from freezing or disconnecting when Alt-Tabbed
+      backgroundThrottling: false,
+      
+      // NEW: Ensures WebGL is enabled natively
+      webgl: true
     }
   });
 
   //Force the window to start maximized
   win.maximize();
-  win.setAutoHideMenuBar(false);
   win.setMenuBarVisibility(true);
+  win.setAutoHideMenuBar(true);
 
   //Intercept F11 to toggle "FULL FULL screen"
   win.webContents.on('before-input-event', (event, input) => {
@@ -28,9 +41,16 @@ function createWindow () {
     }
   });
 
-  //Inject toast notification once the page loads
+  //Inject toast notification once the page loads and set up GC
   win.webContents.on('did-finish-load', () => {
     showToastNotification(win, 'Press F11 to toggle Full Screen', 3000);
+    
+    // Trigger garbage collection every 1 minute (60000 milliseconds)
+    setInterval(() => {
+      win.webContents.executeJavaScript('if (typeof window.gc === "function") window.gc();')
+        .then(() => console.log('Manual garbage collection triggered.'))
+        .catch(err => console.error('GC failed:', err));
+    }, 60000);
   });
 
   win.loadURL('https://www.hero-wars-alliance.com/');
@@ -62,7 +82,7 @@ app.whenReady().then(() => {
   app.userAgentFallback = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64;) AppleWebKit/537.36 (KHTML, like Gecko) old-airport-include/1.0.0 Chrome Electron/8.4.0 Safari/537.36";
   
   app.setAboutPanelOptions({
-    applicationName: 'Hero Wars: Alliance (BETA) linux client',
+    applicationName: 'Hero Wars: Alliance (BETA) pc client',
     iconPath: path.join(__dirname, 'icon.png'),
     copyright: '© all rights/trademarks are the property of their respective owners',
     applicationVersion: app.getVersion(),
